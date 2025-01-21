@@ -1,0 +1,6 @@
+# Virtual environment
+backend/venv/
+
+.env
+
+portfolio.db
