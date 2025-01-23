@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from .routers import auth, portfolio
+import uvicorn
+from app.routers import auth, portfolio
 
 app = FastAPI()
 
@@ -25,3 +26,6 @@ app.include_router(portfolio.router, tags=["portfolio"])
 @app.get("/")
 def read_root():
     return {"message": "Welcome to the Stock Portfolio Management API"}
+
+if __name__ == "__main__":
+    uvicorn.run("main:app", host="0.0.0.0", reload=True, port=8000)

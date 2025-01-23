@@ -1,58 +1,67 @@
-import requests
 from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
+from fastapi import HTTPException
 from .. import models, schemas
-from ..config import settings
+from ..utils.stock_api import fetch_daily_stock_data, fetch_stock_overview
 
 def add_stock(db: Session, stock: schemas.StockCreate, portfolio_id: int):
-    # Fetch stock data from Alpha Vantage API
-    api_key = settings.ALPHA_VANTAGE_API_KEY
     symbol = stock.ticker_symbol
-    url = f"https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol={symbol}&apikey={api_key}"
 
-    response = requests.get(url)
-    data = response.json()
+    try:
+        # Fetch stock data
+        daily_data = fetch_daily_stock_data(symbol)
+        if not daily_data:
+            raise HTTPException(status_code=404, detail=f"No data found for stock symbol: {symbol}")
 
-    if "Time Series (Daily)" not in data:
-        raise ValueError("Unable to fetch stock data from Alpha Vantage API")
+        latest_date = max(daily_data.keys())
 
-    daily_data = data["Time Series (Daily)"]
-    latest_date = max(daily_data.keys())
+        # Get the stock name
+        overview_data = fetch_stock_overview(symbol)
+        if not overview_data:
+            raise HTTPException(status_code=404, detail=f"No overview data found for stock symbol: {symbol}")
 
-    # Get the stock name
-    overview_url = f"https://www.alphavantage.co/query?function=OVERVIEW&symbol={symbol}&apikey={api_key}"
-    overview_response = requests.get(overview_url)
-    overview_data = overview_response.json()
-    stock_name = overview_data.get("Name", symbol)
+        stock_name = overview_data.get("Name", symbol)
 
-    # Create the stock
-    db_stock = models.Stock(
-        ticker_symbol=symbol,
-        name=stock_name,
-        number_of_shares=stock.number_of_shares,
-        purchase_price=stock.purchase_price,
-        current_price=float(daily_data[latest_date]["4. close"]),
-        portfolio_id=portfolio_id
-    )
-    db.add(db_stock)
-    db.flush()  # This assigns an id to db_stock
+        # Create the stock
+        db_stock = models.Stock(
+            ticker_symbol=symbol,
+            name=stock_name,
+            number_of_shares=stock.number_of_shares,
+            issue_date=stock.issue_date,
+            purchase_price=stock.purchase_price,
+            current_price=float(daily_data[latest_date]["4. close"]),
+            portfolio_id=portfolio_id
+        )
+        db.add(db_stock)
+        db.flush()
 
-    # Add price history
-    end_date = datetime.strptime(latest_date, "%Y-%m-%d")
-    start_date = end_date - timedelta(days=60)
+        # Add price history
+        end_date = datetime.strptime(latest_date, "%Y-%m-%d")
+        start_date = end_date - timedelta(days=60)
 
-    for date_str, values in daily_data.items():
-        date = datetime.strptime(date_str, "%Y-%m-%d")
-        if start_date <= date <= end_date:
-            price_history = models.StockPriceHistory(
-                stock_id=db_stock.id,
-                date=date,
-                price=float(values["4. close"])
-            )
-            db.add(price_history)
-    db.commit()
-    db.refresh(db_stock)
-    return db_stock
+        for date_str, values in daily_data.items():
+            date = datetime.strptime(date_str, "%Y-%m-%d")
+            if start_date <= date <= end_date:
+                price_history = models.StockPriceHistory(
+                    stock_id=db_stock.id,
+                    date=date,
+                    price=float(values["4. close"])
+                )
+                db.add(price_history)
+
+        db.commit()
+        db.refresh(db_stock)
+        return db_stock
+
+    except ValueError as ve:
+        db.rollback()
+        raise HTTPException(status_code=400, detail=str(ve))
+    except HTTPException as he:
+        db.rollback()
+        raise he
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"An error occurred while adding the stock: {str(e)}")
 
 def update_stock(db: Session, stock_id: int, stock: schemas.StockCreate):
     db_stock = db.query(models.Stock).filter(models.Stock.id == stock_id).first()
@@ -68,4 +77,15 @@ def delete_stock(db: Session, stock_id: int):
     if db_stock:
         db.delete(db_stock)
         db.commit()
+    return db_stock
+
+def get_stocks_in_portfolio(db: Session, portfolio_id: int):
+    return db.query(models.Stock).filter(models.Stock.portfolio_id == portfolio_id).all()
+
+def update_stock_price(db: Session, stock_id: int, current_price: float):
+    db_stock = db.query(models.Stock).filter(models.Stock.id == stock_id).first()
+    if db_stock:
+        db_stock.current_price = current_price
+        db.commit()
+        db.refresh(db_stock)
     return db_stock

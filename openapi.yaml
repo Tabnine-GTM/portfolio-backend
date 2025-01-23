@@ -295,3 +295,15 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+        '404':
+          description: Portfolio not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '400':
+          description: Bad request (e.g., API error)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'

@@ -46,12 +46,13 @@ Before you begin, ensure you have the following installed on your local machine:
 
 5. Initialize the database:
    ```
+   rm -f portfolio.db
    alembic upgrade head
    ```
 
 6. (Optional) Seed the database:
    ```
-   python app/seed.py
+   python -m app.seed
    ```
 
 ## Running the Application
@@ -85,7 +86,7 @@ This project uses Alembic for database migrations. Here are some common commands
    ```
    alembic downgrade -1
    ```
-   
+
 - View migration history:
    ```
    alembic history
