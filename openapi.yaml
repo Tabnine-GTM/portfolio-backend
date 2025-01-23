@@ -42,7 +42,21 @@ components:
           type: number
         purchase_price:
           type: number
+        current_price:
+          type: number
+        price_history:
+          type: array
+          items:
+            $ref: '#/components/schemas/StockPriceHistory'
 
+    StockPriceHistory:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        price:
+          type: number
     Portfolio:
       type: object
       properties:
@@ -54,6 +68,8 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Stock'
+        total_value:
+          type: number
 
     Error:
       type: object
@@ -65,6 +81,8 @@ paths:
   /auth/register:
     post:
       summary: Register a new user
+      tags:
+        - Authentication
       requestBody:
         required: true
         content:
@@ -95,6 +113,8 @@ paths:
   /auth/login:
     post:
       summary: User login
+      tags:
+        - Authentication
       requestBody:
         required: true
         content:
@@ -126,6 +146,8 @@ paths:
   /auth/logout:
     post:
       summary: User logout
+      tags:
+        - Authentication
       security:
         - bearerAuth: []
       responses:
@@ -140,7 +162,9 @@ paths:
 
   /portfolio:
     get:
-      summary: Get current user's portfolio (includes refreshing stock data)
+      summary: Get current user's portfolio
+      tags:
+        - Portfolio
       security:
         - bearerAuth: []
       responses:
@@ -160,6 +184,8 @@ paths:
   /portfolio/stock:
     post:
       summary: Add a stock to the current user's portfolio
+      tags:
+        - Portfolio
       security:
         - bearerAuth: []
       requestBody:
@@ -167,23 +193,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                ticker_symbol:
-                  type: string
-                name:
-                  type: string
-                issue_date:
-                  type: string
-                  format: date
-                number_of_shares:
-                  type: number
-                purchase_price:
-                  type: number
-              required:
-                - ticker_symbol
-                - number_of_shares
-                - purchase_price
+              $ref: '#/components/schemas/Stock'
       responses:
         '201':
           description: Stock added successfully
@@ -201,6 +211,8 @@ paths:
   /portfolio/stock/{stock_id}:
     put:
       summary: Update a stock in the current user's portfolio
+      tags:
+        - Portfolio
       security:
         - bearerAuth: []
       parameters:
@@ -214,19 +226,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                ticker_symbol:
-                  type: string
-                name:
-                  type: string
-                issue_date:
-                  type: string
-                  format: date
-                number_of_shares:
-                  type: number
-                purchase_price:
-                  type: number
+              $ref: '#/components/schemas/Stock'
       responses:
         '200':
           description: Stock updated successfully
@@ -249,6 +249,8 @@ paths:
 
     delete:
       summary: Remove a stock from the current user's portfolio
+      tags:
+        - Portfolio
       security:
         - bearerAuth: []
       parameters:
@@ -268,6 +270,27 @@ paths:
                 $ref: '#/components/schemas/Error'
         '404':
           description: Stock not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /portfolio/refresh:
+    post:
+      summary: Refresh stock data for the current user's portfolio
+      tags:
+        - Portfolio
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Stock data refreshed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Portfolio'
+        '401':
+          description: Unauthorized
           content:
             application/json:
               schema:

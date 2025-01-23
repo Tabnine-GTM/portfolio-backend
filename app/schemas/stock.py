@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 from datetime import date
 
 class StockBase(BaseModel):
@@ -12,8 +12,13 @@ class StockBase(BaseModel):
 class StockCreate(StockBase):
     pass
 
+class StockPriceHistory(BaseModel):
+    date: date
+    price: float
 class Stock(StockBase):
     id: int
+    current_price: float
+    price_history: List[StockPriceHistory]
 
     class Config:
         from_attributes = True

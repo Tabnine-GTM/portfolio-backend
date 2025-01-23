@@ -1,8 +1,7 @@
-from . import models, schemas, crud
-from .database import SessionLocal, engine
-
-# Create tables
-models.Base.metadata.create_all(bind=engine)
+from . import schemas, crud
+from .database import SessionLocal
+from alembic import command
+from alembic.config import Config
 
 # Sample data
 users = [
@@ -17,7 +16,12 @@ stocks = [
     {"ticker_symbol": "AMZN", "number_of_shares": 8, "purchase_price": 3200.00},
 ]
 
+def run_migrations():
+    alembic_cfg = Config("alembic.ini")
+    command.upgrade(alembic_cfg, "head")
 def seed_database():
+    # Run migrations
+    run_migrations()
     db = SessionLocal()
     try:
         # Create users and their portfolios

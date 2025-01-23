@@ -1,24 +1,20 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from .. import crud, schemas
-from ..utils import auth
 from ..database import get_db
+from ..utils import auth  # Import auth from utils instead of the main app
 
 router = APIRouter()
 
-@router.get("/portfolio", response_model=schemas.Portfolio)
-def read_portfolio(current_user: schemas.User = Depends(auth.get_current_user), db: Session = Depends(get_db)):
-    portfolio = crud.get_portfolio(db, user_id=current_user.id)
-    if portfolio is None:
-        portfolio = crud.create_portfolio(db, user_id=current_user.id)
-    return portfolio
-
-@router.post("/portfolio/stock", response_model=schemas.Stock)
+@router.post("/stocks", response_model=schemas.Stock)
 def add_stock(stock: schemas.StockCreate, current_user: schemas.User = Depends(auth.get_current_user), db: Session = Depends(get_db)):
     portfolio = crud.get_portfolio(db, user_id=current_user.id)
     if portfolio is None:
         portfolio = crud.create_portfolio(db, user_id=current_user.id)
-    return crud.add_stock(db=db, stock=stock, portfolio_id=portfolio.id)
+    try:
+        return crud.add_stock(db=db, stock=stock, portfolio_id=portfolio.id)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 @router.put("/portfolio/stock/{stock_id}", response_model=schemas.Stock)
 def update_stock(stock_id: int, stock: schemas.StockCreate, current_user: schemas.User = Depends(auth.get_current_user), db: Session = Depends(get_db)):

@@ -46,6 +46,11 @@ Before you begin, ensure you have the following installed on your local machine:
 
 5. Initialize the database:
    ```
+   alembic upgrade head
+   ```
+
+6. (Optional) Seed the database:
+   ```
    python app/seed.py
    ```
 
@@ -61,6 +66,32 @@ To run the application locally:
    ```
 
 3. The API will be available at `http://localhost:8000`.
+
+## Database Migration
+
+This project uses Alembic for database migrations. Here are some common commands:
+
+- Create a new migration:
+   ```
+   alembic revision -m "Description of the changes"
+   ```
+
+- Apply all pending migrations:
+   ```
+   alembic upgrade head
+   ```
+
+- Revert the last migration:
+   ```
+   alembic downgrade -1
+   ```
+   
+- View migration history:
+   ```
+   alembic history
+   ```
+
+For more detailed information on using Alembic, refer to the Alembic documentation.
 
 ## Project Structure
 
