@@ -62,6 +62,46 @@ To run the application locally:
 
 3. The API will be available at `http://localhost:8000`.
 
+## Project Structure
+
+The project follows a modular structure to enhance maintainability and scalability:
+
+portfolio-backend/
+├── app/
+│   ├── models/
+│   │   └── ... (data models)
+│   ├── routers/
+│   │   └── ... (API routes)
+│   ├── auth.py
+│   ├── crud.py
+│   ├── database.py
+│   ├── main.py
+│   ├── models.py
+│   ├── schemas.py
+│   └── seed.py
+├── .env
+├── .env.sample
+├── CONTRIBUTING.md
+├── LICENSE
+├── README.md
+├── openapi.yaml
+├── requirements.txt
+└── setup.sh
+
+- `app/`: Main application directory
+  - `models/`: Contains data model definitions
+  - `routers/`: Contains API route definitions
+  - `auth.py`: Authentication-related functionality
+  - `crud.py`: CRUD operations
+  - `database.py`: Database connection and session management
+  - `main.py`: Main FastAPI application entry point
+  - `models.py`: SQLAlchemy models
+  - `schemas.py`: Pydantic schemas for request/response validation
+  - `seed.py`: Database seeding script
+- `openapi.yaml`: OpenAPI specification
+- `requirements.txt`: Python dependencies
+- `setup.sh`: Setup script for the project
+
 ## API Documentation
 
 Once the application is running, you can access the API documentation:
