@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, ForeignKey
 from sqlalchemy.orm import relationship
 
-from . import Base
+from app.database import Base
 
 class Portfolio(Base):
     __tablename__ = "portfolios"

@@ -1,5 +1,5 @@
 import requests
-from ..config import settings
+from app.config import settings
 
 def fetch_daily_stock_data(symbol: str):
     api_key = settings.ALPHA_VANTAGE_API_KEY

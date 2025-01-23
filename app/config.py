@@ -2,7 +2,7 @@ from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     ALPHA_VANTAGE_API_KEY: str
-    DATABASE_URL: str = "sqlite:///./portfolio.db"
+    DATABASE_URL: str
     SECRET_KEY: str
     ALGORITHM: str
     ACCESS_TOKEN_EXPIRE_MINUTES: int

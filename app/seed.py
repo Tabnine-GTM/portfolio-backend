@@ -1,7 +1,13 @@
-from . import schemas, crud
-from .database import SessionLocal
 from alembic import command
 from alembic.config import Config
+
+from app.crud.portfolio import create_portfolio, get_portfolio
+from app.crud.stock import add_stock
+from app.crud.user import get_user_by_username, create_user
+from app.database import db_session
+from app.schemas.stock import StockCreate
+from app.schemas.user import UserCreate
+
 
 # Sample data
 users = [
@@ -22,31 +28,31 @@ def run_migrations():
 def seed_database():
     # Run migrations
     run_migrations()
-    db = SessionLocal()
+    db = db_session()
     try:
         # Create users and their portfolios
         for user_data in users:
             # Check if user already exists
-            existing_user = crud.get_user_by_username(db, user_data["username"])
+            existing_user = get_user_by_username(user_data["username"], db)
             if existing_user:
                 print(f"User {user_data['username']} already exists. Skipping.")
                 continue
-            user = schemas.UserCreate(**user_data)
-            db_user = crud.create_user(db, user)
+            user = UserCreate(**user_data)
+            db_user = create_user(db, user)
             print(f"Created user: {db_user.username}")
 
             # Create portfolio for the user
-            existing_portfolio = crud.get_portfolio(db, db_user.id)
+            existing_portfolio = get_portfolio(db, db_user.id)
             if existing_portfolio:
                 print(f"Portfolio for user {db_user.username} already exists. Skipping.")
                 continue
-            portfolio = crud.create_portfolio(db, db_user.id)
+            portfolio = create_portfolio(db, db_user.id)
             print(f"Created portfolio for user: {db_user.username}")
 
             # Add stocks to the user's portfolio
             for stock_data in stocks:
-                stock = schemas.StockCreate(**stock_data)
-                db_stock = crud.add_stock(db, stock, portfolio.id)
+                stock = StockCreate(**stock_data)
+                db_stock = add_stock(db, stock, portfolio.id)
                 print(f"Added stock {db_stock.ticker_symbol} to {db_user.username}'s portfolio")
 
     except Exception as e:

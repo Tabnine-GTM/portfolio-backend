@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from typing import List
-from .stock import Stock
+
+from app.schemas.stock import Stock
 
 class PortfolioBase(BaseModel):
     pass

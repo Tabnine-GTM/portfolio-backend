@@ -1,10 +1,12 @@
 from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 from fastapi import HTTPException
-from .. import models, schemas
-from ..utils.stock_api import fetch_daily_stock_data, fetch_stock_overview
 
-def add_stock(db: Session, stock: schemas.StockCreate, portfolio_id: int):
+from app.models.stock import Stock, StockPriceHistory
+from app.schemas.stock import StockCreate
+from app.utils.stock_api import fetch_daily_stock_data, fetch_stock_overview
+
+def add_stock(db: Session, stock: StockCreate, portfolio_id: int):
     symbol = stock.ticker_symbol
 
     try:
@@ -23,7 +25,7 @@ def add_stock(db: Session, stock: schemas.StockCreate, portfolio_id: int):
         stock_name = overview_data.get("Name", symbol)
 
         # Create the stock
-        db_stock = models.Stock(
+        db_stock = Stock(
             ticker_symbol=symbol,
             name=stock_name,
             number_of_shares=stock.number_of_shares,
@@ -42,7 +44,7 @@ def add_stock(db: Session, stock: schemas.StockCreate, portfolio_id: int):
         for date_str, values in daily_data.items():
             date = datetime.strptime(date_str, "%Y-%m-%d")
             if start_date <= date <= end_date:
-                price_history = models.StockPriceHistory(
+                price_history = StockPriceHistory(
                     stock_id=db_stock.id,
                     date=date,
                     price=float(values["4. close"])
@@ -63,8 +65,8 @@ def add_stock(db: Session, stock: schemas.StockCreate, portfolio_id: int):
         db.rollback()
         raise HTTPException(status_code=500, detail=f"An error occurred while adding the stock: {str(e)}")
 
-def update_stock(db: Session, stock_id: int, stock: schemas.StockCreate):
-    db_stock = db.query(models.Stock).filter(models.Stock.id == stock_id).first()
+def update_stock(db: Session, stock_id: int, stock: StockCreate):
+    db_stock = db.query(Stock).filter(Stock.id == stock_id).first()
     if db_stock:
         for key, value in stock.dict().items():
             setattr(db_stock, key, value)
@@ -73,17 +75,17 @@ def update_stock(db: Session, stock_id: int, stock: schemas.StockCreate):
     return db_stock
 
 def delete_stock(db: Session, stock_id: int):
-    db_stock = db.query(models.Stock).filter(models.Stock.id == stock_id).first()
+    db_stock = db.query(Stock).filter(Stock.id == stock_id).first()
     if db_stock:
         db.delete(db_stock)
         db.commit()
     return db_stock
 
 def get_stocks_in_portfolio(db: Session, portfolio_id: int):
-    return db.query(models.Stock).filter(models.Stock.portfolio_id == portfolio_id).all()
+    return db.query(Stock).filter(Stock.portfolio_id == portfolio_id).all()
 
 def update_stock_price(db: Session, stock_id: int, current_price: float):
-    db_stock = db.query(models.Stock).filter(models.Stock.id == stock_id).first()
+    db_stock = db.query(Stock).filter(Stock.id == stock_id).first()
     if db_stock:
         db_stock.current_price = current_price
         db.commit()
