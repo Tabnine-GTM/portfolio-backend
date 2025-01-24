@@ -30,10 +30,22 @@ def logout(response: Response):
     return {"message": "Logged out successfully"}
 
 @router.post("/register")
-def register(user: UserCreate, db: Session = Depends(get_db)):
+def register(response: Response, user: UserCreate, db: Session = Depends(get_db)):
     db_user = get_user_by_username(user.username, db)
     if db_user:
         raise HTTPException(status_code=400, detail="Username already registered")
     
     db_user = create_user(db, user)
-    return {"message": "User registered successfully", "user": db_user}
+
+    # Generate access token
+    access_token = manager.create_access_token(data={"sub": db_user.username})
+
+    # Set the token in a cookie
+    manager.set_cookie(response, access_token)
+
+    return {
+        "message": "User registered and logged in successfully",
+        "user": db_user,
+        "access_token": access_token,
+        "token_type": "Bearer"
+    }
