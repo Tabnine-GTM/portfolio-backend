@@ -17,7 +17,8 @@ router = APIRouter()
 def get_user_portfolio(current_user: User = Depends(manager), db: Session = Depends(get_db)):
     db_portfolio = get_portfolio(db, user_id=current_user.id)
     if db_portfolio is None:
-        raise HTTPException(status_code=404, detail="Portfolio not found")
+        # Create a new portfolio for the user
+        db_portfolio = create_portfolio(db, user_id=current_user.id)
     return db_portfolio
 
 @router.post("/portfolio/stock", response_model=Stock)
@@ -26,7 +27,7 @@ def add_stock(stock: StockCreate, current_user: User = Depends(manager), db: Ses
     if portfolio is None:
         portfolio = create_portfolio(db, user_id=current_user.id)
     try:
-        return crudStock.add_stockdd_stock(db=db, stock=stock, portfolio_id=portfolio.id)
+        return crudStock.add_stock(db=db, stock=stock, portfolio_id=portfolio.id)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
