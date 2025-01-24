@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.crud.user import get_user_by_username, create_user
 from app.database import get_db
-from app.schemas.user import UserCreate
+from app.schemas.user import UserCreate, User
 from app.security import verify_password, manager
 
 router = APIRouter(prefix="/auth")
@@ -49,3 +49,7 @@ def register(response: Response, user: UserCreate, db: Session = Depends(get_db)
         "access_token": access_token,
         "token_type": "Bearer"
     }
+
+@router.get("/user", response_model=User)
+def get_current_user(user: User = Depends(manager)):
+    return user
