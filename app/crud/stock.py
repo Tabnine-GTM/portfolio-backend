@@ -38,18 +38,18 @@ def add_stock(db: Session, stock: StockCreate, portfolio_id: int):
         db.flush()
 
         # Add price history
-        end_date = datetime.strptime(latest_date, "%Y-%m-%d")
+        end_date = datetime.strptime(latest_date, "%Y-%m-%d").date()
         start_date = end_date - timedelta(days=60)
 
         for date_str, values in daily_data.items():
-            date = datetime.strptime(date_str, "%Y-%m-%d")
+            date = datetime.strptime(date_str, "%Y-%m-%d").date()
             if start_date <= date <= end_date:
-                price_history = StockPriceHistory(
+                add_stock_price_history(
+                    db,
                     stock_id=db_stock.id,
                     date=date,
                     price=float(values["4. close"])
                 )
-                db.add(price_history)
 
         db.commit()
         db.refresh(db_stock)
