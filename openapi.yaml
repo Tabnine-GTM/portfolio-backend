@@ -275,6 +275,51 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
+  /portfolio/stock/{stock_id}/refresh-history:
+    post:
+      summary: Refresh historical prices for a specific stock
+      tags:
+        - Portfolio
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: stock_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Stock historical prices refreshed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Stock'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden (Not authorized to refresh this stock)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Stock not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '400':
+          description: Bad request (e.g., API error)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
   /portfolio/refresh:
     post:
       summary: Refresh stock data for the current user's portfolio

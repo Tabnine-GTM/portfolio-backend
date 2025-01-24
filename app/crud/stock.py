@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from sqlalchemy.orm import Session
 from fastapi import HTTPException
 
@@ -91,3 +91,20 @@ def update_stock_price(db: Session, stock_id: int, current_price: float):
         db.commit()
         db.refresh(db_stock)
     return db_stock
+
+def get_stock(db: Session, stock_id: int):
+    return db.query(Stock).filter(Stock.id == stock_id).first()
+
+def clear_stock_price_history(db: Session, stock_id: int):
+    db.query(StockPriceHistory).filter(StockPriceHistory.stock_id == stock_id).delete()
+    db.commit()
+
+def add_stock_price_history(db: Session, stock_id: int, date: date, price: float):
+    price_history = StockPriceHistory(
+        stock_id=stock_id,
+        date=date,
+        price=price
+    )
+    db.add(price_history)
+    db.commit()
+    return price_history
