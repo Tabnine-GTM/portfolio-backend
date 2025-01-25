@@ -22,11 +22,14 @@ def login(response: Response, form_data: OAuth2PasswordRequestForm = Depends(), 
 
     access_token = manager.create_access_token(data={"sub": user.username})
     manager.set_cookie(response, access_token)
-    return {"access_token": access_token, "token_type": "Bearer"}
+    return {"message": "Logged in successfully"}
 
 @router.post("/logout")
 def logout(response: Response):
-    manager.set_cookie(response, "")
+    response.delete_cookie(
+        key=manager.cookie_name,
+        httponly=True
+    )
     return {"message": "Logged out successfully"}
 
 @router.post("/register")
@@ -45,9 +48,7 @@ def register(response: Response, user: UserCreate, db: Session = Depends(get_db)
 
     return {
         "message": "User registered and logged in successfully",
-        "user": db_user,
-        "access_token": access_token,
-        "token_type": "Bearer"
+        "user": db_user
     }
 
 @router.get("/user", response_model=User)
