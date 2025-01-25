@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta, date
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from fastapi import HTTPException
 
 from app.models.stock import Stock, StockPriceHistory
@@ -108,3 +108,8 @@ def add_stock_price_history(db: Session, stock_id: int, date: date, price: float
     db.add(price_history)
     db.commit()
     return price_history
+
+def get_stock_with_price_history(db: Session, stock_id: int):
+    return db.query(Stock).options(
+        joinedload(Stock.price_history)
+    ).filter(Stock.id == stock_id).first()

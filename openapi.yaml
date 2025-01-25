@@ -70,7 +70,8 @@ components:
             $ref: '#/components/schemas/Stock'
         total_value:
           type: number
-
+          description: The total value of all stocks in the portfolio
+          
     Error:
       type: object
       properties:

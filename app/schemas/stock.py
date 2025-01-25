@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from typing import Optional, List
 from datetime import date
 
@@ -9,16 +9,23 @@ class StockBase(BaseModel):
     number_of_shares: float
     purchase_price: float
 
+    model_config = ConfigDict(from_attributes=True)
 class StockCreate(StockBase):
     pass
 
 class StockPriceHistory(BaseModel):
     date: date
     price: float
+
+    model_config = ConfigDict(from_attributes=True)
+
 class Stock(StockBase):
     id: int
     current_price: float
+
+    model_config = ConfigDict(from_attributes=True)
+
+class StockWithPriceHistory(Stock):
     price_history: List[StockPriceHistory]
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
