@@ -2,6 +2,7 @@ from pydantic import BaseModel, ConfigDict
 from typing import Optional, List
 from datetime import date
 
+
 class StockBase(BaseModel):
     ticker_symbol: str
     name: Optional[str] = None
@@ -10,8 +11,11 @@ class StockBase(BaseModel):
     purchase_price: float
 
     model_config = ConfigDict(from_attributes=True)
+
+
 class StockCreate(StockBase):
     pass
+
 
 class StockPriceHistory(BaseModel):
     date: date
@@ -19,11 +23,13 @@ class StockPriceHistory(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+
 class Stock(StockBase):
     id: int
     current_price: float
 
     model_config = ConfigDict(from_attributes=True)
+
 
 class StockWithPriceHistory(Stock):
     price_history: List[StockPriceHistory]

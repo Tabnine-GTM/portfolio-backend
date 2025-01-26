@@ -3,11 +3,14 @@ from typing import List
 
 from app.schemas.stock import Stock
 
+
 class PortfolioBase(BaseModel):
     pass
 
+
 class PortfolioCreate(PortfolioBase):
     pass
+
 
 class Portfolio(PortfolioBase):
     id: int

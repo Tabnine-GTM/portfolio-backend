@@ -10,13 +10,18 @@ from app.security import verify_password, manager
 
 router = APIRouter(prefix="/auth")
 
+
 @router.post("/login")
-def login(response: Response, form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+def login(
+    response: Response,
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    db: Session = Depends(get_db),
+):
     user = get_user_by_username(form_data.username, db)
 
     if user is None:
         raise InvalidCredentialsException
-    
+
     if not verify_password(form_data.password, user.hashed_password):
         raise InvalidCredentialsException
 
@@ -24,20 +29,19 @@ def login(response: Response, form_data: OAuth2PasswordRequestForm = Depends(), 
     manager.set_cookie(response, access_token)
     return {"message": "Logged in successfully"}
 
+
 @router.post("/logout")
 def logout(response: Response):
-    response.delete_cookie(
-        key=manager.cookie_name,
-        httponly=True
-    )
+    response.delete_cookie(key=manager.cookie_name, httponly=True)
     return {"message": "Logged out successfully"}
+
 
 @router.post("/register")
 def register(response: Response, user: UserCreate, db: Session = Depends(get_db)):
     db_user = get_user_by_username(user.username, db)
     if db_user:
         raise HTTPException(status_code=400, detail="Username already registered")
-    
+
     db_user = create_user(db, user)
 
     # Generate access token
@@ -46,10 +50,8 @@ def register(response: Response, user: UserCreate, db: Session = Depends(get_db)
     # Set the token in a cookie
     manager.set_cookie(response, access_token)
 
-    return {
-        "message": "User registered and logged in successfully",
-        "user": db_user
-    }
+    return {"message": "User registered and logged in successfully", "user": db_user}
+
 
 @router.get("/user", response_model=User)
 def get_current_user(user: User = Depends(manager)):

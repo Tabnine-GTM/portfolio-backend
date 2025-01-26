@@ -1,6 +1,7 @@
 import requests
 from app.config import settings
 
+
 def fetch_daily_stock_data(symbol: str):
     api_key = settings.ALPHA_VANTAGE_API_KEY
     url = f"https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol={symbol}&apikey={api_key}"
@@ -13,6 +14,7 @@ def fetch_daily_stock_data(symbol: str):
 
     return data["Time Series (Daily)"]
 
+
 def fetch_stock_overview(symbol: str):
     api_key = settings.ALPHA_VANTAGE_API_KEY
     url = f"https://www.alphavantage.co/query?function=OVERVIEW&symbol={symbol}&apikey={api_key}"
@@ -21,6 +23,7 @@ def fetch_stock_overview(symbol: str):
     data = response.json()
 
     return data
+
 
 def fetch_multiple_stock_data(symbols: list[str]):
     api_key = settings.ALPHA_VANTAGE_API_KEY
@@ -39,7 +42,7 @@ def fetch_multiple_stock_data(symbols: list[str]):
         result[symbol] = {
             "price": quote["2. price"],
             "volume": quote["3. volume"],
-            "timestamp": quote["4. timestamp"]
+            "timestamp": quote["4. timestamp"],
         }
 
     return result

@@ -3,6 +3,7 @@ from sqlalchemy.orm import relationship
 
 from app.database import Base
 
+
 class Stock(Base):
     __tablename__ = "stocks"
 
@@ -17,6 +18,7 @@ class Stock(Base):
 
     portfolio = relationship("Portfolio", back_populates="stocks")
     price_history = relationship("StockPriceHistory", back_populates="stock")
+
 
 class StockPriceHistory(Base):
     __tablename__ = "stock_price_history"

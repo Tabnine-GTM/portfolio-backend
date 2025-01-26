@@ -12,7 +12,11 @@ from app.schemas.user import UserCreate
 # Sample data
 users = [
     {"username": "john_doe", "email": "john@example.com", "password": "password123"},
-    {"username": "jane_smith", "email": "jane@example.com", "password": "securepass456"},
+    {
+        "username": "jane_smith",
+        "email": "jane@example.com",
+        "password": "securepass456",
+    },
 ]
 
 stocks = [
@@ -22,9 +26,12 @@ stocks = [
     {"ticker_symbol": "AMZN", "number_of_shares": 8, "purchase_price": 3200.00},
 ]
 
+
 def run_migrations():
     alembic_cfg = Config("alembic.ini")
     command.upgrade(alembic_cfg, "head")
+
+
 def seed_database():
     # Run migrations
     run_migrations()
@@ -44,7 +51,9 @@ def seed_database():
             # Create portfolio for the user
             existing_portfolio = get_portfolio(db, db_user.id)
             if existing_portfolio:
-                print(f"Portfolio for user {db_user.username} already exists. Skipping.")
+                print(
+                    f"Portfolio for user {db_user.username} already exists. Skipping."
+                )
                 continue
             portfolio = create_portfolio(db, db_user.id)
             print(f"Created portfolio for user: {db_user.username}")
@@ -53,13 +62,16 @@ def seed_database():
             for stock_data in stocks:
                 stock = StockCreate(**stock_data)
                 db_stock = add_stock(db, stock, portfolio.id)
-                print(f"Added stock {db_stock.ticker_symbol} to {db_user.username}'s portfolio")
+                print(
+                    f"Added stock {db_stock.ticker_symbol} to {db_user.username}'s portfolio"
+                )
 
     except Exception as e:
         print(f"Error: {e}")
         db.rollback()
     finally:
         db.close()
+
 
 if __name__ == "__main__":
     seed_database()
