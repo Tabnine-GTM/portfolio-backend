@@ -27,6 +27,11 @@ class StockPriceHistory(BaseModel):
 class Stock(StockBase):
     id: int
     current_price: float
+    market_cap: Optional[float] = None
+    pe_ratio: Optional[float] = None
+    week_52_high: Optional[float] = None
+    week_52_low: Optional[float] = None
+    portfolio_id: int
 
     model_config = ConfigDict(from_attributes=True)
 

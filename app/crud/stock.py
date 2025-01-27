@@ -20,7 +20,7 @@ def add_stock(db: Session, stock: StockCreate, portfolio_id: int):
 
         latest_date = max(daily_data.keys())
 
-        # Get the stock name
+        # Get the stock name and additional information
         overview_data = fetch_stock_overview(symbol)
         if not overview_data:
             raise HTTPException(
@@ -28,7 +28,16 @@ def add_stock(db: Session, stock: StockCreate, portfolio_id: int):
                 detail=f"No overview data found for stock symbol: {symbol}",
             )
 
+        # Create the stock
         stock_name = overview_data.get("Name", symbol)
+        market_cap = float(overview_data.get("MarketCapitalization", 0))
+        pe_ratio = (
+            float(overview_data.get("PERatio", 0))
+            if overview_data.get("PERatio") not in ["None", None]
+            else None
+        )
+        week_52_high = float(overview_data.get("52WeekHigh", 0))
+        week_52_low = float(overview_data.get("52WeekLow", 0))
 
         # Create the stock
         db_stock = Stock(
@@ -38,6 +47,10 @@ def add_stock(db: Session, stock: StockCreate, portfolio_id: int):
             issue_date=stock.issue_date,
             purchase_price=stock.purchase_price,
             current_price=float(daily_data[latest_date]["4. close"]),
+            market_cap=market_cap,
+            pe_ratio=pe_ratio,
+            week_52_high=week_52_high,
+            week_52_low=week_52_low,
             portfolio_id=portfolio_id,
         )
         db.add(db_stock)

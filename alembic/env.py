@@ -6,7 +6,8 @@ from sqlalchemy import pool
 from alembic import context
 
 # Add these imports
-from app.models import Base
+from app.models import *  # noqa: F403
+from app.database import Base
 from app.config import settings
 
 # this is the Alembic Config object, which provides

@@ -14,6 +14,10 @@ class Stock(Base):
     number_of_shares = Column(Float)
     purchase_price = Column(Float)
     current_price = Column(Float)
+    market_cap = Column(Float)
+    pe_ratio = Column(Float)
+    week_52_high = Column(Float)
+    week_52_low = Column(Float)
     portfolio_id = Column(Integer, ForeignKey("portfolios.id"))
 
     portfolio = relationship("Portfolio", back_populates="stocks")
