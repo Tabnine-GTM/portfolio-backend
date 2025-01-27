@@ -35,287 +35,334 @@ components:
           type: string
         name:
           type: string
-        issue_date:
-          type: string
-          format: date
-        number_of_shares:
-          type: number
-        purchase_price:
-          type: number
-        current_price:
-          type: number
-        price_history:
-          type: array
-          items:
-            $ref: '#/components/schemas/StockPriceHistory'
+        nullable: true
+      issue_date:
+        type: string
+        format: date
+        nullable: true
+      number_of_shares:
+        type: number
+      purchase_price:
+        type: number
+      current_price:
+        type: number
+      market_cap:
+        type: number
+        nullable: true
+      pe_ratio:
+        type: number
+        nullable: true
+      week_52_high:
+        type: number
+        nullable: true
+      week_52_low:
+        type: number
+        nullable: true
+      portfolio_id:
+        type: integer
 
-    StockPriceHistory:
-      type: object
-      properties:
-        date:
-          type: string
-          format: date
-        price:
-          type: number
-    Portfolio:
-      type: object
-      properties:
-        id:
+  StockPriceHistory:
+    type: object
+    properties:
+      date:
+        type: string
+        format: date
+      price:
+        type: number
+
+  StockWithPriceHistory:
+    allOf:
+      - $ref: '#/components/schemas/Stock'
+      - type: object
+        properties:
+          price_history:
+            type: array
+            items:
+              $ref: '#/components/schemas/StockPriceHistory'
+
+  StockCreate:
+    type: object
+    properties:
+      ticker_symbol:
+        type: string
+      name:
+        type: string
+        nullable: true
+      issue_date:
+        type: string
+        format: date
+        nullable: true
+      number_of_shares:
+        type: number
+      purchase_price:
+        type: number
+
+  Portfolio:
+    type: object
+    properties:
+      id:
+        type: integer
+      user_id:
+        type: integer
+      stocks:
+        type: array
+        items:
+          $ref: '#/components/schemas/Stock'
+      total_value:
+        type: number
+
+  Error:
+    type: object
+    properties:
+      detail:
+        type: string
+
+  UserCreate:
+    type: object
+    properties:
+      username:
+        type: string
+      email:
+        type: string
+      password:
+        type: string
+ths:
+/auth/register:
+  post:
+    summary: Register a new user
+    tags:
+      - Authentication
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/UserCreate'
+    responses:
+      '200':
+        description: User registered successfully
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                user:
+                  $ref: '#/components/schemas/User'
+      '400':
+        description: Bad request
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Error'
+
+/auth/login:
+  post:
+    summary: User login
+    tags:
+      - Authentication
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              username:
+                type: string
+              password:
+                type: string
+    responses:
+      '200':
+        description: Successful login
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                access_token:
+                  type: string
+      '401':
+        description: Invalid credentials
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Error'
+
+/auth/logout:
+  post:
+    summary: User logout
+    tags:
+      - Authentication
+    security:
+      - bearerAuth: []
+    responses:
+      '200':
+        description: Successful logout
+      '401':
+        description: Unauthorized
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Error'
+
+/auth/user:
+  get:
+    summary: Get current user information
+    tags:
+      - Authentication
+    security:
+      - bearerAuth: []
+    responses:
+      '200':
+        description: Successful response
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+      '401':
+        description: Unauthorized
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Error'
+
+/portfolio:
+  get:
+    summary: Get current user's portfolio
+    tags:
+      - Portfolio
+    security:
+      - bearerAuth: []
+    responses:
+      '200':
+        description: Successful response
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Portfolio'
+      '401':
+        description: Unauthorized
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Error'
+
+/portfolio/stock:
+  post:
+    summary: Add a stock to the current user's portfolio
+    tags:
+      - Portfolio
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/StockCreate'
+    responses:
+      '201':
+        description: Stock added successfully
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Stock'
+      '401':
+        description: Unauthorized
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Error'
+
+/portfolio/stock/{stock_id}:
+  put:
+    summary: Update a stock in the current user's portfolio
+    tags:
+      - Portfolio
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: stock_id
+        in: path
+        required: true
+        schema:
           type: integer
-        user_id:
-          type: integer
-        stocks:
-          type: array
-          items:
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
             $ref: '#/components/schemas/Stock'
-        total_value:
-          type: number
-          description: The total value of all stocks in the portfolio
-          
-    Error:
-      type: object
-      properties:
-        detail:
-          type: string
-
-paths:
-  /auth/register:
-    post:
-      summary: Register a new user
-      tags:
-        - Authentication
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                username:
-                  type: string
-                email:
-                  type: string
-                password:
-                  type: string
-      responses:
-        '201':
-          description: User registered successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User'
-        '400':
-          description: Bad request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-
-  /auth/login:
-    post:
-      summary: User login
-      tags:
-        - Authentication
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                username:
-                  type: string
-                password:
-                  type: string
-      responses:
-        '200':
-          description: Successful login
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  access_token:
-                    type: string
-        '401':
-          description: Invalid credentials
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-
-  /auth/logout:
-    post:
-      summary: User logout
-      tags:
-        - Authentication
-      security:
-        - bearerAuth: []
-      responses:
-        '200':
-          description: Successful logout
-        '401':
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-  /auth/user:
-    get:
-      summary: Get current user information
-      tags:
-        - Authentication
-      security:
-        - bearerAuth: []
-      responses:
-        '200':
-          description: Successful response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User'
-        '401':
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-
-  /portfolio:
-    get:
-      summary: Get current user's portfolio
-      tags:
-        - Portfolio
-      security:
-        - bearerAuth: []
-      responses:
-        '200':
-          description: Successful response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Portfolio'
-        '401':
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-
-  /portfolio/stock:
-    post:
-      summary: Add a stock to the current user's portfolio
-      tags:
-        - Portfolio
-      security:
-        - bearerAuth: []
-      requestBody:
-        required: true
+    responses:
+      '200':
+        description: Stock updated successfully
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/Stock'
-      responses:
-        '201':
-          description: Stock added successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Stock'
-        '401':
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-
-  /portfolio/stock/{stock_id}:
-    put:
-      summary: Update a stock in the current user's portfolio
-      tags:
-        - Portfolio
-      security:
-        - bearerAuth: []
-      parameters:
-        - name: stock_id
-          in: path
-          required: true
-          schema:
-            type: integer
-      requestBody:
-        required: true
+      '401':
+        description: Unauthorized
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Stock'
-      responses:
-        '200':
-          description: Stock updated successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Stock'
-        '401':
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '404':
-          description: Stock not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+              $ref: '#/components/schemas/Error'
+      '404':
+        description: Stock not found
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Error'
 
-    delete:
-      summary: Remove a stock from the current user's portfolio
-      tags:
-        - Portfolio
-      security:
-        - bearerAuth: []
-      parameters:
-        - name: stock_id
-          in: path
-          required: true
-          schema:
-            type: integer
-      responses:
-        '204':
-          description: Stock removed successfully
-        '401':
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '404':
-          description: Stock not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+  delete:
+    summary: Remove a stock from the current user's portfolio
+    tags:
+      - Portfolio
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: stock_id
+        in: path
+        required: true
+        schema:
+          type: integer
+    responses:
+      '204':
+        description: Stock removed successfully
+      '401':
+        description: Unauthorized
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Error'
+      '404':
+        description: Stock not found
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Error'
 
-  /portfolio/stock/{stock_id}/refresh-history:
-    post:
-      summary: Refresh historical prices for a specific stock
-      tags:
-        - Portfolio
-      security:
-        - bearerAuth: []
-      parameters:
-        - name: stock_id
-          in: path
-          required: true
-          schema:
-            type: integer
-      responses:
-        '200':
-          description: Stock historical prices refreshed successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Stock'
+/portfolio/stock/{stock_id}/refresh-history:
+  post:
+    summary: Refresh historical prices for a specific stock
+    tags:
+      - Portfolio
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: stock_id
+        in: path
+        required: true
+        schema:
+          type: integer
+    responses:
+      '200':
+        description: Stock historical prices refreshed successfully
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StockWithPriceHistory'
         '401':
           description: Unauthorized
           content:
