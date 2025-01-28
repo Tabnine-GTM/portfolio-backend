@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Response
+from fastapi import APIRouter, Depends, HTTPException, Response, Cookie
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi_login.exceptions import InvalidCredentialsException
 from sqlalchemy.orm import Session
@@ -6,7 +6,14 @@ from sqlalchemy.orm import Session
 from app.crud.user import get_user_by_username, create_user
 from app.database import get_db
 from app.schemas.user import UserCreate, User
-from app.security import verify_password, manager
+from app.security import (
+    verify_password,
+    manager,
+    create_tokens,
+    set_tokens_cookies,
+    clear_tokens_cookies,
+    verify_refresh_token,
+)
 
 router = APIRouter(prefix="/auth")
 
@@ -19,20 +26,18 @@ def login(
 ):
     user = get_user_by_username(form_data.username, db)
 
-    if user is None:
+    if user is None or not verify_password(form_data.password, user.hashed_password):
         raise InvalidCredentialsException
 
-    if not verify_password(form_data.password, user.hashed_password):
-        raise InvalidCredentialsException
+    access_token, refresh_token = create_tokens(user.username)
+    set_tokens_cookies(response, access_token, refresh_token)
 
-    access_token = manager.create_access_token(data={"sub": user.username})
-    manager.set_cookie(response, access_token)
     return {"message": "Logged in successfully"}
 
 
 @router.post("/logout")
 def logout(response: Response):
-    response.delete_cookie(key=manager.cookie_name, httponly=True)
+    clear_tokens_cookies(response)
     return {"message": "Logged out successfully"}
 
 
@@ -44,11 +49,8 @@ def register(response: Response, user: UserCreate, db: Session = Depends(get_db)
 
     db_user = create_user(db, user)
 
-    # Generate access token
-    access_token = manager.create_access_token(data={"sub": db_user.username})
-
-    # Set the token in a cookie
-    manager.set_cookie(response, access_token)
+    access_token, refresh_token = create_tokens(db_user.username)
+    set_tokens_cookies(response, access_token, refresh_token)
 
     return {"message": "User registered and logged in successfully", "user": db_user}
 
@@ -56,3 +58,19 @@ def register(response: Response, user: UserCreate, db: Session = Depends(get_db)
 @router.get("/user", response_model=User)
 def get_current_user(user: User = Depends(manager)):
     return user
+
+
+@router.post("/refresh")
+def refresh_token(
+    response: Response, refresh_token: str = Cookie(None, alias="refresh_token")
+):
+    if not refresh_token:
+        raise HTTPException(status_code=401, detail="Refresh token not found")
+    username = verify_refresh_token(refresh_token)
+    if not username:
+        raise HTTPException(status_code=401, detail="Invalid refresh token")
+
+    new_access_token, new_refresh_token = create_tokens(username)
+    set_tokens_cookies(response, new_access_token, new_refresh_token)
+
+    return {"message": "Token refreshed successfully"}
