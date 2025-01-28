@@ -2,6 +2,7 @@ from datetime import timedelta
 from fastapi import Response
 from fastapi_login import LoginManager
 from passlib.context import CryptContext
+from jose import jwt, JWTError
 
 from app.config import settings
 
@@ -49,13 +50,26 @@ def set_tokens_cookies(response: Response, access_token: str, refresh_token: str
 
 
 def clear_tokens_cookies(response: Response):
-    response.delete_cookie(key=manager.cookie_name, httponly=True, secure=settings.PRODUCTION, samesite="lax")
-    response.delete_cookie(key="refresh_token", httponly=True, secure=settings.PRODUCTION, samesite="lax")
+    response.delete_cookie(
+        key=manager.cookie_name,
+        httponly=True,
+        secure=settings.PRODUCTION,
+        samesite="lax",
+    )
+    response.delete_cookie(
+        key="refresh_token", httponly=True, secure=settings.PRODUCTION, samesite="lax"
+    )
 
 
 def verify_refresh_token(refresh_token: str):
     try:
-        data = manager.get_token_data(refresh_token)
-        return data.get("sub")
+        payload = jwt.decode(refresh_token, settings.SECRET_KEY, algorithms=["HS256"])
+        username = payload.get("sub")
+        if username:
+            return username
+        else:
+            return None
+    except JWTError:
+        return None
     except Exception:
         return None
