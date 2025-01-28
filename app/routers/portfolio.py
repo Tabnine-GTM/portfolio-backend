@@ -15,21 +15,28 @@ router.include_router(stock_router, prefix="/portfolio", tags=["stock"])
 
 
 @router.get("/portfolio", response_model=Portfolio)
+@router.get("/portfolio", response_model=Portfolio)
 def get_user_portfolio(
     portfolio: PortfolioModel = Depends(get_or_create_user_portfolio),
     db: Session = Depends(get_db),
 ):
-    # Calculate the total value of the portfolio
-    total_value = sum(
+    # Calculate the current market value of the portfolio
+    current_market_value = sum(
         stock.current_price * stock.number_of_shares for stock in portfolio.stocks
     )
 
-    # Create a Portfolio object with the calculated total value
+    # Calculate the total cost basis of the portfolio
+    total_cost_basis = sum(
+        stock.purchase_price * stock.number_of_shares for stock in portfolio.stocks
+    )
+
+    # Create a Portfolio object with the calculated values
     return Portfolio(
         id=portfolio.id,
         user_id=portfolio.user_id,
         stocks=portfolio.stocks,
-        total_value=total_value,
+        current_market_value=current_market_value,
+        total_cost_basis=total_cost_basis,
     )
 
 

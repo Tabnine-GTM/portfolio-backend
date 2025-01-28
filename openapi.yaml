@@ -108,7 +108,9 @@ components:
         type: array
         items:
           $ref: '#/components/schemas/Stock'
-      total_value:
+      current_market_value:
+        type: number
+      total_cost_basis:
         type: number
 
   Error:
