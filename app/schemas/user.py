@@ -1,9 +1,14 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, EmailStr
+
+# Define the ConfigDict once
+common_config = ConfigDict(from_attributes=True)
 
 
 class UserBase(BaseModel):
     username: str
-    email: str
+    email: EmailStr
+
+    model_config = common_config
 
 
 class UserCreate(UserBase):
@@ -13,5 +18,6 @@ class UserCreate(UserBase):
 class User(UserBase):
     id: int
 
-    class Config:
-        from_attributes = True
+
+class UserInDB(User):
+    hashed_password: str

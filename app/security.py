@@ -2,7 +2,7 @@ from datetime import timedelta
 from fastapi import Response
 from fastapi_login import LoginManager
 from passlib.context import CryptContext
-from jose import jwt, JWTError
+import jwt
 
 from app.config import settings
 
@@ -65,11 +65,6 @@ def verify_refresh_token(refresh_token: str):
     try:
         payload = jwt.decode(refresh_token, settings.SECRET_KEY, algorithms=["HS256"])
         username = payload.get("sub")
-        if username:
-            return username
-        else:
-            return None
-    except JWTError:
-        return None
-    except Exception:
+        return username if username else None
+    except jwt.PyJWTError:
         return None

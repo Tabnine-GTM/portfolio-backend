@@ -1,11 +1,11 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from typing import List
 
 from app.schemas.stock import Stock
 
 
 class PortfolioBase(BaseModel):
-    pass
+    model_config = ConfigDict(from_attributes=True)
 
 
 class PortfolioCreate(PortfolioBase):
@@ -18,6 +18,3 @@ class Portfolio(PortfolioBase):
     stocks: List[Stock] = []
     current_market_value: float = 0.0
     total_cost_basis: float = 0.0
-
-    class Config:
-        from_attributes = True

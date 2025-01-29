@@ -33,10 +33,6 @@ class Stock(StockBase):
     week_52_low: Optional[float] = None
     portfolio_id: int
 
-    model_config = ConfigDict(from_attributes=True)
-
 
 class StockWithPriceHistory(Stock):
     price_history: List[StockPriceHistory]
-
-    model_config = ConfigDict(from_attributes=True)

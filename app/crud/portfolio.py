@@ -1,10 +1,12 @@
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models.portfolio import Portfolio
 
 
 def get_portfolio(db: Session, user_id: int):
-    return db.query(Portfolio).filter(Portfolio.user_id == user_id).first()
+    stmt = select(Portfolio).where(Portfolio.user_id == user_id)
+    return db.execute(stmt).scalar_one_or_none()
 
 
 def create_portfolio(db: Session, user_id: int):

@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta, date
+from sqlalchemy import select, delete
 from sqlalchemy.orm import Session, joinedload
 from fastapi import HTTPException
 
@@ -68,7 +69,6 @@ def add_stock(db: Session, stock: StockCreate, portfolio_id: int):
                 )
 
         db.commit()
-        db.refresh(db_stock)
         return db_stock
 
     except ValueError as ve:
@@ -86,9 +86,11 @@ def add_stock(db: Session, stock: StockCreate, portfolio_id: int):
 
 
 def update_stock(db: Session, stock_id: int, stock: StockCreate):
-    db_stock = db.query(Stock).filter(Stock.id == stock_id).first()
+    stmt = select(Stock).filter_by(id=stock_id)
+    result = db.execute(stmt)
+    db_stock = result.scalar_one_or_none()
     if db_stock:
-        for key, value in stock.dict().items():
+        for key, value in stock.model_dump().items():
             setattr(db_stock, key, value)
         db.commit()
         db.refresh(db_stock)
@@ -96,7 +98,9 @@ def update_stock(db: Session, stock_id: int, stock: StockCreate):
 
 
 def delete_stock(db: Session, stock_id: int):
-    db_stock = db.query(Stock).filter(Stock.id == stock_id).first()
+    stmt = select(Stock).filter_by(id=stock_id)
+    result = db.execute(stmt)
+    db_stock = result.scalar_one_or_none()
     if db_stock:
         db.delete(db_stock)
         db.commit()
@@ -104,11 +108,15 @@ def delete_stock(db: Session, stock_id: int):
 
 
 def get_stocks_in_portfolio(db: Session, portfolio_id: int):
-    return db.query(Stock).filter(Stock.portfolio_id == portfolio_id).all()
+    return (
+        db.execute(select(Stock).filter_by(portfolio_id=portfolio_id)).scalars().all()
+    )
 
 
 def update_stock_price(db: Session, stock_id: int, current_price: float):
-    db_stock = db.query(Stock).filter(Stock.id == stock_id).first()
+    stmt = select(Stock).filter_by(id=stock_id)
+    result = db.execute(stmt)
+    db_stock = result.scalar_one_or_none()
     if db_stock:
         db_stock.current_price = current_price
         db.commit()
@@ -117,11 +125,12 @@ def update_stock_price(db: Session, stock_id: int, current_price: float):
 
 
 def get_stock(db: Session, stock_id: int):
-    return db.query(Stock).filter(Stock.id == stock_id).first()
+    return db.execute(select(Stock).filter_by(id=stock_id)).scalar_one_or_none()
 
 
 def clear_stock_price_history(db: Session, stock_id: int):
-    db.query(StockPriceHistory).filter(StockPriceHistory.stock_id == stock_id).delete()
+    stmt = delete(StockPriceHistory).where(StockPriceHistory.stock_id == stock_id)
+    db.execute(stmt)
     db.commit()
 
 
@@ -133,9 +142,5 @@ def add_stock_price_history(db: Session, stock_id: int, date: date, price: float
 
 
 def get_stock_with_price_history(db: Session, stock_id: int):
-    return (
-        db.query(Stock)
-        .options(joinedload(Stock.price_history))
-        .filter(Stock.id == stock_id)
-        .first()
-    )
+    stmt = select(Stock).options(joinedload(Stock.price_history)).filter_by(id=stock_id)
+    return db.execute(stmt).scalar_one_or_none()
