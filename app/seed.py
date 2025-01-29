@@ -1,3 +1,5 @@
+from typing import List, Dict, Union
+from sqlalchemy.orm import Session
 from alembic import command
 from alembic.config import Config
 
@@ -7,10 +9,12 @@ from app.crud.user import get_user_by_username, create_user
 from app.database import db_session
 from app.schemas.stock import StockCreate
 from app.schemas.user import UserCreate
-
+from app.models.user import User
+from app.models.portfolio import Portfolio
+from app.models.stock import Stock
 
 # Sample data
-users = [
+users: List[Dict[str, str]] = [
     {"username": "john_doe", "email": "john@example.com", "password": "password123"},
     {
         "username": "jane_smith",
@@ -19,7 +23,7 @@ users = [
     },
 ]
 
-stocks = [
+stocks: List[Dict[str, Union[str, int, float]]] = [
     {"ticker_symbol": "AAPL", "number_of_shares": 10, "purchase_price": 150.00},
     {"ticker_symbol": "GOOGL", "number_of_shares": 5, "purchase_price": 2500.00},
     {"ticker_symbol": "MSFT", "number_of_shares": 15, "purchase_price": 300.00},
@@ -27,41 +31,41 @@ stocks = [
 ]
 
 
-def run_migrations():
-    alembic_cfg = Config("alembic.ini")
+def run_migrations() -> None:
+    alembic_cfg: Config = Config("alembic.ini")
     command.upgrade(alembic_cfg, "head")
 
 
-def seed_database():
+def seed_database() -> None:
     # Run migrations
     run_migrations()
-    db = db_session()
+    db: Session = db_session()
     try:
         # Create users and their portfolios
         for user_data in users:
             # Check if user already exists
-            existing_user = get_user_by_username(user_data["username"], db)
+            existing_user: User | None = get_user_by_username(user_data["username"], db)
             if existing_user:
                 print(f"User {user_data['username']} already exists. Skipping.")
                 continue
-            user = UserCreate(**user_data)
-            db_user = create_user(db, user)
+            user: UserCreate = UserCreate(**user_data)
+            db_user: User = create_user(db, user)
             print(f"Created user: {db_user.username}")
 
             # Create portfolio for the user
-            existing_portfolio = get_portfolio(db, db_user.id)
+            existing_portfolio: Portfolio | None = get_portfolio(db, db_user.id)
             if existing_portfolio:
                 print(
                     f"Portfolio for user {db_user.username} already exists. Skipping."
                 )
                 continue
-            portfolio = create_portfolio(db, db_user.id)
+            portfolio: Portfolio = create_portfolio(db, db_user.id)
             print(f"Created portfolio for user: {db_user.username}")
 
             # Add stocks to the user's portfolio
             for stock_data in stocks:
-                stock = StockCreate(**stock_data)
-                db_stock = add_stock(db, stock, portfolio.id)
+                stock: StockCreate = StockCreate(**stock_data)
+                db_stock: Stock = add_stock(db, stock, portfolio.id)
                 print(
                     f"Added stock {db_stock.ticker_symbol} to {db_user.username}'s portfolio"
                 )

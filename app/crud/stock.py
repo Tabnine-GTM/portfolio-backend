@@ -2,13 +2,14 @@ from datetime import datetime, timedelta, date
 from sqlalchemy import select, delete
 from sqlalchemy.orm import Session, joinedload
 from fastapi import HTTPException
+from typing import Optional
 
 from app.models.stock import Stock, StockPriceHistory
 from app.schemas.stock import StockCreate
 from app.utils.stock_api import fetch_daily_stock_data, fetch_stock_overview
 
 
-def add_stock(db: Session, stock: StockCreate, portfolio_id: int):
+def add_stock(db: Session, stock: StockCreate, portfolio_id: int) -> Stock:
     symbol = stock.ticker_symbol
 
     try:
@@ -85,7 +86,7 @@ def add_stock(db: Session, stock: StockCreate, portfolio_id: int):
         )
 
 
-def update_stock(db: Session, stock_id: int, stock: StockCreate):
+def update_stock(db: Session, stock_id: int, stock: StockCreate) -> Optional[Stock]:
     stmt = select(Stock).filter_by(id=stock_id)
     result = db.execute(stmt)
     db_stock = result.scalar_one_or_none()
@@ -97,7 +98,7 @@ def update_stock(db: Session, stock_id: int, stock: StockCreate):
     return db_stock
 
 
-def delete_stock(db: Session, stock_id: int):
+def delete_stock(db: Session, stock_id: int) -> Optional[Stock]:
     stmt = select(Stock).filter_by(id=stock_id)
     result = db.execute(stmt)
     db_stock = result.scalar_one_or_none()
@@ -107,13 +108,15 @@ def delete_stock(db: Session, stock_id: int):
     return db_stock
 
 
-def get_stocks_in_portfolio(db: Session, portfolio_id: int):
+def get_stocks_in_portfolio(db: Session, portfolio_id: int) -> list[Stock]:
     return (
         db.execute(select(Stock).filter_by(portfolio_id=portfolio_id)).scalars().all()
     )
 
 
-def update_stock_price(db: Session, stock_id: int, current_price: float):
+def update_stock_price(
+    db: Session, stock_id: int, current_price: float
+) -> Optional[Stock]:
     stmt = select(Stock).filter_by(id=stock_id)
     result = db.execute(stmt)
     db_stock = result.scalar_one_or_none()
@@ -124,23 +127,25 @@ def update_stock_price(db: Session, stock_id: int, current_price: float):
     return db_stock
 
 
-def get_stock(db: Session, stock_id: int):
+def get_stock(db: Session, stock_id: int) -> Optional[Stock]:
     return db.execute(select(Stock).filter_by(id=stock_id)).scalar_one_or_none()
 
 
-def clear_stock_price_history(db: Session, stock_id: int):
+def clear_stock_price_history(db: Session, stock_id: int) -> None:
     stmt = delete(StockPriceHistory).where(StockPriceHistory.stock_id == stock_id)
     db.execute(stmt)
     db.commit()
 
 
-def add_stock_price_history(db: Session, stock_id: int, date: date, price: float):
+def add_stock_price_history(
+    db: Session, stock_id: int, date: date, price: float
+) -> StockPriceHistory:
     price_history = StockPriceHistory(stock_id=stock_id, date=date, price=price)
     db.add(price_history)
     db.commit()
     return price_history
 
 
-def get_stock_with_price_history(db: Session, stock_id: int):
+def get_stock_with_price_history(db: Session, stock_id: int) -> Optional[Stock]:
     stmt = select(Stock).options(joinedload(Stock.price_history)).filter_by(id=stock_id)
     return db.execute(stmt).scalar_one_or_none()

@@ -7,11 +7,14 @@ from app.schemas.stock import StockCreate, Stock, StockWithPriceHistory
 from app.utils.stock_api import fetch_daily_stock_data
 from app.dependencies import get_or_create_user_portfolio
 from datetime import datetime, timedelta
+from typing import Dict, Any
 
 router = APIRouter()
 
 
-def verify_stock_in_portfolio(stock_id: int, portfolio: Portfolio, db: Session):
+def verify_stock_in_portfolio(
+    stock_id: int, portfolio: Portfolio, db: Session
+) -> Stock:
     stock = crudStock.get_stock(db, stock_id=stock_id)
     if stock is None or stock.portfolio_id != portfolio.id:
         raise HTTPException(
@@ -25,7 +28,7 @@ def add_stock(
     stock: StockCreate,
     portfolio: Portfolio = Depends(get_or_create_user_portfolio),
     db: Session = Depends(get_db),
-):
+) -> Stock:
     try:
         return crudStock.add_stock(db=db, stock=stock, portfolio_id=portfolio.id)
     except ValueError as e:
@@ -38,7 +41,7 @@ def update_stock(
     stock: StockCreate,
     portfolio: Portfolio = Depends(get_or_create_user_portfolio),
     db: Session = Depends(get_db),
-):
+) -> Stock:
     verify_stock_in_portfolio(stock_id, portfolio, db)
     return crudStock.update_stock(db, stock_id=stock_id, stock=stock)
 
@@ -48,10 +51,9 @@ def delete_stock(
     stock_id: int,
     portfolio: Portfolio = Depends(get_or_create_user_portfolio),
     db: Session = Depends(get_db),
-):
+) -> None:
     verify_stock_in_portfolio(stock_id, portfolio, db)
     crudStock.delete_stock(db, stock_id=stock_id)
-    return {"ok": True}
 
 
 @router.get("/stock/{stock_id}", response_model=StockWithPriceHistory)
@@ -59,7 +61,7 @@ def get_stock_with_history(
     stock_id: int,
     portfolio: Portfolio = Depends(get_or_create_user_portfolio),
     db: Session = Depends(get_db),
-):
+) -> StockWithPriceHistory:
     stock_with_history = crudStock.get_stock_with_price_history(db, stock_id=stock_id)
     if stock_with_history is None or stock_with_history.portfolio_id != portfolio.id:
         raise HTTPException(
@@ -73,11 +75,13 @@ def refresh_stock_history(
     stock_id: int,
     portfolio: Portfolio = Depends(get_or_create_user_portfolio),
     db: Session = Depends(get_db),
-):
+) -> Stock:
     stock = verify_stock_in_portfolio(stock_id, portfolio, db)
 
     try:
-        daily_data = fetch_daily_stock_data(stock.ticker_symbol)
+        daily_data: Dict[str, Dict[str, Any]] = fetch_daily_stock_data(
+            stock.ticker_symbol
+        )
 
         end_date = datetime.now().date()
         start_date = end_date - timedelta(days=60)

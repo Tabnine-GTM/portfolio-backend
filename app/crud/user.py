@@ -27,7 +27,7 @@ def get_user_by_username(
     return user
 
 
-def create_user(db: Session, user: UserCreate):
+def create_user(db: Session, user: UserCreate) -> User:
     hashed_password = hash_password(user.password)
     db_user = User(
         username=user.username, email=user.email, hashed_password=hashed_password
