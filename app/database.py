@@ -3,6 +3,7 @@ from typing import Generator
 from sqlalchemy import create_engine, event
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 from sqlalchemy.engine import Engine
+from sqlalchemy.pool import QueuePool
 
 from app.config import settings
 
@@ -18,6 +19,9 @@ def set_sqlite_pragma(dbapi_connection, connection_record):
 engine = create_engine(
     settings.DATABASE_URL,
     connect_args={"check_same_thread": False},
+    poolclass=QueuePool,
+    pool_size=20,  # Increase this value based on your needs
+    max_overflow=10,  # Allow up to 10 connections beyond the pool_size
     pool_pre_ping=True,
     pool_recycle=300,
 )
