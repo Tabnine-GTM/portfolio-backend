@@ -59,7 +59,7 @@ def register(
     return {"message": "User registered and logged in successfully", "user": db_user}
 
 
-@router.get("/user", response_model=User)
+@router.get("/me", response_model=User)
 def get_current_user(user: User = Depends(manager)) -> User:
     return user
 

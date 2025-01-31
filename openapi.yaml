@@ -209,7 +209,7 @@ ths:
             schema:
               $ref: '#/components/schemas/Error'
 
-/auth/user:
+/auth/me:
   get:
     summary: Get current user information
     tags:

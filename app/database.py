@@ -1,10 +1,26 @@
+from contextlib import contextmanager
 from typing import Generator
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, event
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
+from sqlalchemy.engine import Engine
 
 from app.config import settings
 
-engine = create_engine(settings.DATABASE_URL, connect_args={"check_same_thread": False})
+
+# Enable foreign key support for SQLite
+@event.listens_for(Engine, "connect")
+def set_sqlite_pragma(dbapi_connection, connection_record):
+    cursor = dbapi_connection.cursor()
+    cursor.execute("PRAGMA foreign_keys=ON")
+    cursor.close()
+
+
+engine = create_engine(
+    settings.DATABASE_URL,
+    connect_args={"check_same_thread": False},
+    pool_pre_ping=True,
+    pool_recycle=300,
+)
 
 
 class Base(DeclarativeBase):
@@ -14,23 +30,21 @@ class Base(DeclarativeBase):
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
-class DBContext:
-    def __init__(self) -> None:
-        self.db: Session = SessionLocal()
-
-    def __enter__(self) -> Session:
-        return self.db
-
-    def __exit__(
-        self,
-        exc_type: type[BaseException] | None,
-        exc_value: BaseException | None,
-        traceback: object | None,
-    ) -> None:
-        self.db.close()
+@contextmanager
+def db_session() -> Generator[Session, None, None]:
+    """Provide a transactional scope around a series of operations."""
+    session: Session = SessionLocal()
+    try:
+        yield session
+        session.commit()
+    except Exception:
+        session.rollback()
+        raise
+    finally:
+        session.close()
 
 
 def get_db() -> Generator[Session, None, None]:
-    """Returns the current db connection"""
-    with DBContext() as db:
-        yield db
+    """Dependency to get DB session."""
+    with db_session() as session:
+        yield session
